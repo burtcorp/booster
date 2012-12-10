@@ -14,6 +14,8 @@ Booster = ->
           result = process(definition.dependencies, definition.fn)
 
         args.push result
+      else
+        throw "Dependency #{dependency} not defined"
   
     target.apply(target, args)
 

@@ -58,6 +58,15 @@ describe 'Booster', ->
         @Booster.factory 'foo', ->
         ).bind(@).should.throw()
   
+    it 'should raise error when dependency does not exist', (done) ->
+      @Booster.factory 'foo', ['bar'], (bar) ->
+
+      (->
+        @Booster.start 'foo', ->
+        ).bind(@).should.throw()
+  
+      @Booster.start(done)
+
   describe '#service', ->
     it 'should define simple service', (done) ->
       @Booster.service 'addition', ->
@@ -111,3 +120,12 @@ describe 'Booster', ->
       (->
         @Booster.service 'foo', ->
         ).bind(@).should.throw()
+
+    it 'should raise error when dependency does not exist', (done) ->
+      @Booster.service 'foo', ['bar'], (bar) ->
+
+      (->
+        @Booster.start 'foo', ->
+        ).bind(@).should.throw()
+  
+      @Booster.start(done)
