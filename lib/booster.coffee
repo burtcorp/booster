@@ -1,45 +1,40 @@
 Booster = ->
-  services = {}
-  factories = {}
+  definitions = {}
+  cache = {}
 
   process = (dependencies, target) ->
     args = []
 
     for dependency in dependencies
-      factory = factories[dependency]
-      if factory and factory.dependencies
-        factory.cache ?= process(factory.dependencies, factory.fn)
-        args.push factory.cache
-  
-      service = services[dependency]
-      if service and service.dependencies
-        args.push process(service.dependencies, service.fn)
+      definition = definitions[dependency]
+      if definition
+        if definition.cache
+          result = cache[definition] ?= process(definition.dependencies, definition.fn)
+        else
+          result = process(definition.dependencies, definition.fn)
 
+        args.push result
+  
     target.apply(target, args)
 
+  define = (name, dependencies, fn, options = {}) ->
+    if definitions[name]
+      throw "Already defined factory or service '#{name}'"
+
+    unless fn
+      fn = dependencies
+      dependencies = []
+
+    options.fn = fn
+    options.dependencies = dependencies
+
+    definitions[name] = options
+
   factory = (name, dependencies, fn) ->
-    if factories[name]
-      throw "Factory '#{name}' already defined"
+    define name, dependencies, fn, cache: true
 
-    unless fn
-      fn = dependencies
-      dependencies = []
-
-    factories[name] =
-      fn: fn
-      dependencies: dependencies
-  
   service = (name, dependencies, fn) ->
-    if services[name]
-      throw "Service '#{name}' already defined"
-
-    unless fn
-      fn = dependencies
-      dependencies = []
-
-    services[name] =
-      fn: fn
-      dependencies: dependencies
+    define name, dependencies, fn, cache: false
 
   start = (dependencies, fn) ->
     unless fn
