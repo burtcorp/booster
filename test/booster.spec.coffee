@@ -26,6 +26,18 @@ describe 'Booster', ->
       @Booster.start ['multiplication'], (multiplication) ->
         (multiplication 2, 2).should.equal(4)
       @Booster.start(done)
+  
+    it 'should define factory with multiple arguments', (done) ->
+      @Booster.factory 'addition', ->
+        (a, b) -> a + b
+      @Booster.factory 'subtraction', ->
+        (a, b) -> a - b
+      @Booster.factory 'math', ['addition', 'subtraction'], (addition, subtraction) ->
+        (a, b) -> addition a, (subtraction a, b)
+  
+      @Booster.start ['math'], (math) ->
+        math(1, 3).should.equal(-1)
+      @Booster.start(done)
 
     it 'should be singleton', (done) ->
       @Booster.factory 'random', ->
@@ -67,6 +79,18 @@ describe 'Booster', ->
           
       @Booster.start ['multiplication'], (multiplication) ->
         (multiplication 2, 2).should.equal(4)
+      @Booster.start(done)
+  
+    it 'should define service with multiple arguments', (done) ->
+      @Booster.service 'addition', ->
+        (a, b) -> a + b
+      @Booster.service 'subtraction', ->
+        (a, b) -> a - b
+      @Booster.service 'math', ['addition', 'subtraction'], (addition, subtraction) ->
+        (a, b) -> addition a, (subtraction a, b)
+  
+      @Booster.start ['math'], (math) ->
+        math(1, 3).should.equal(-1)
       @Booster.start(done)
 
     it 'should not be singleton', (done) ->

@@ -9,7 +9,7 @@ Booster = ->
       definition = definitions[dependency]
       if definition
         if definition.cache
-          result = cache[definition] ?= process(definition.dependencies, definition.fn)
+          result = cache[dependency] ?= process(definition.dependencies, definition.fn)
         else
           result = process(definition.dependencies, definition.fn)
 
