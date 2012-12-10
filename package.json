@@ -1,0 +1,20 @@
+{
+  "name": "booster",
+  "version": "0.0.1",
+  "author": "Burtcorp <info@burtcorp.com>",
+  "description": "Dependency injection management",
+  "contributors": [
+    {
+      "name": "Johan Andersson",
+      "email": "johan@burtcorp.com"
+    }
+  ],
+  "devDependencies": {
+    "mocha":  "1.7.4",
+    "should":  "1.2.1"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.6"
+  }
+}
