@@ -15,7 +15,7 @@ Booster = ->
 
         args.push result
       else
-        throw "Dependency #{dependency} not defined"
+        throw "Dependency '#{dependency}' not defined"
   
     target.apply(target, args)
 
