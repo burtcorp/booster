@@ -1,4 +1,5 @@
 Booster = ->
+  services = {}
   factories = {}
 
   process = (dependencies, target) ->
@@ -6,11 +7,13 @@ Booster = ->
 
     for dependency in dependencies
       factory = factories[dependency]
-
-      if factory.dependencies
+      if factory and factory.dependencies
         factory.cache ?= process(factory.dependencies, factory.fn)
-
         args.push factory.cache
+  
+      service = services[dependency]
+      if service and service.dependencies
+        args.push process(service.dependencies, service.fn)
 
     target.apply(target, args)
 
@@ -25,6 +28,18 @@ Booster = ->
     factories[name] =
       fn: fn
       dependencies: dependencies
+  
+  service = (name, dependencies, fn) ->
+    if services[name]
+      throw "Service '#{name}' already defined"
+
+    unless fn
+      fn = dependencies
+      dependencies = []
+
+    services[name] =
+      fn: fn
+      dependencies: dependencies
 
   start = (dependencies, fn) ->
     unless fn
@@ -35,5 +50,6 @@ Booster = ->
 
   start: start
   factory: factory
+  service: service
 
 exports.Booster = Booster if exports?
