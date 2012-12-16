@@ -15,13 +15,13 @@ Booster = ->
 
         args.push result
       else
-        throw "Dependency '#{dependency}' not defined"
+        throw "Dependency `#{dependency}` not defined"
   
     target.apply(target, args)
 
   define = (name, dependencies, fn, options = {}) ->
     if definitions[name]
-      throw "Already defined factory or service '#{name}'"
+      throw "Already defined factory or service `#{name}`"
 
     unless fn
       fn = dependencies
