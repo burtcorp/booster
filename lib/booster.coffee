@@ -1,52 +1,76 @@
 Booster = ->
-  definitions = {}
+  instances = {}
+  singletons = {}
+  constructors = {}
   cache = {}
 
-  process = (dependencies, target) ->
+  start = (dependencies, fn) ->
     args = []
-
-    for dependency in dependencies
-      definition = definitions[dependency]
-      if definition
-        if definition.cache
-          result = cache[dependency] ?= process(definition.dependencies, definition.fn)
-        else
-          result = process(definition.dependencies, definition.fn)
-
-        args.push result
-      else
-        throw "Dependency `#{dependency}` not defined"
   
-    target.apply(target, args)
+    for dependency in dependencies
+      if singletons[dependency]
+        unless cache.hasOwnProperty(dependency)
+          cache[dependency] = process([], singletons[dependency].dependencies, singletons[dependency].fn)
+        args.push(cache[dependency])
+      else if constructors[dependency]
+        args.push(constructors[dependency].fn)
+      else
+        throw "Instances cannot be injected to start (#{dependency})."
+  
+    fn.apply(null, args)
 
-  define = (name, dependencies, fn, options = {}) ->
-    if definitions[name]
-      throw "Already defined factory or service `#{name}`"
+  process = (argv, dependencies, fn) ->
+    rest = Array.prototype.slice.call(dependencies, argv.length)
+    args = Array.prototype.slice.call(argv, 0)
 
-    unless fn
-      fn = dependencies
-      dependencies = []
+    for arg in rest
+      if arg.slice(0, 1).match(/^[A-Z]$/)
+        args.push constructors[arg].fn
+      else
+        if singletons[arg]
+          unless cache.hasOwnProperty(arg)
+            cache[arg] = process([], singletons[arg].dependencies, singletons[arg].fn)
+          args.push cache[arg]
+        else if instances[arg]
+          args.push process(Array.prototype.slice.call(argv, 0), instances[arg].dependencies, instances[arg].fn)
 
-    options.fn = fn
-    options.dependencies = dependencies
-
-    definitions[name] = options
-
-  factory = (name, dependencies, fn) ->
-    define name, dependencies, fn, cache: true
+    fn.apply(null, args)
 
   service = (name, dependencies, fn) ->
-    define name, dependencies, fn, cache: false
+    unless name.match(/^\$?[a-z][A-Za-z]*$/)
+      throw "Invalid name of service: #{name}"
 
-  start = (dependencies, fn) ->
-    unless fn
-      fn = dependencies
-      dependencies = []
+    if name.slice(0, 1) is '$'
+      constructorName = name.slice(1, 2).toUpperCase() + name.slice(2)
+    else
+      constructorName = name.slice(0, 1).toUpperCase() + name.slice(1)
 
-    process(dependencies, fn)
+    instances[name] =
+      dependencies: dependencies
+      fn: fn
+
+    constructors[constructorName] =
+      dependencies: dependencies
+      fn:
+        new: ->
+          process(Array.prototype.slice.call(arguments, 0), dependencies, fn)
+
+  factory = (name, dependencies, fn) ->
+    unless name.match(/^[a-z][A-Za-z]*$/)
+      throw "Invalid name of factory: #{name}"
+  
+    for dependency in dependencies
+      if instances[dependency]
+        throw "Instances cannot be injected to #factory (#{dependency})."
+      if constructors[dependency]
+        throw "Constructors cannot be injected to #factory (#{dependency})."
+
+    singletons[name] =
+      dependencies: dependencies
+      fn: fn
 
   start: start
-  factory: factory
   service: service
+  factory: factory
 
 exports.Booster = Booster if exports?
