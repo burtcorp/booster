@@ -1,6 +1,6 @@
 {
   "name": "booster",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "Burtcorp <info@burtcorp.com>",
   "description": "Dependency injection management",
   "contributors": [
