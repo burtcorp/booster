@@ -6,7 +6,7 @@ Booster = ->
 
   start = (dependencies, fn) ->
     args = []
-  
+
     for dependency in dependencies
       if singletons[dependency]
         unless cache.hasOwnProperty(dependency)
@@ -15,16 +15,19 @@ Booster = ->
       else if constructors[dependency]
         args.push(constructors[dependency].fn)
       else
-        throw "Instances cannot be injected to start (#{dependency})."
-  
+        if instances[dependency]
+          throw new Error("Instances (#{dependency}) cannot be injected to start.")
+        else
+          throw new Error("Cannot find dependency #{dependency}")
+
     fn.apply(null, args)
 
   process = (argv, dependencies, fn) ->
     rest = Array.prototype.slice.call(dependencies, argv.length)
     args = Array.prototype.slice.call(argv, 0)
-
+  
     for arg in rest
-      if arg.slice(0, 1).match(/^[A-Z]$/)
+      if constructors[arg] and arg.slice(0, 1).match(/^[A-Z]$/)
         args.push constructors[arg].fn
       else
         if singletons[arg]
@@ -33,18 +36,20 @@ Booster = ->
           args.push cache[arg]
         else if instances[arg]
           args.push process(Array.prototype.slice.call(argv, 0), instances[arg].dependencies, instances[arg].fn)
+        else
+          throw new Error("Cannot find dependency #{arg}")
 
     fn.apply(null, args)
 
   service = (name, dependencies, fn) ->
     unless name.match(/^\$?[a-z][A-Za-z]*$/)
-      throw "Invalid name of service: #{name}"
+      throw new Error("Invalid name of service: #{name}")
 
     if name.slice(0, 1) is '$'
       constructorName = name.slice(1, 2).toUpperCase() + name.slice(2)
     else
       constructorName = name.slice(0, 1).toUpperCase() + name.slice(1)
-
+  
     instances[name] =
       dependencies: dependencies
       fn: fn
@@ -57,13 +62,11 @@ Booster = ->
 
   factory = (name, dependencies, fn) ->
     unless name.match(/^[a-z][A-Za-z]*$/)
-      throw "Invalid name of factory: #{name}"
-  
+      throw new Error("Invalid name of factory: #{name}")
+
     for dependency in dependencies
       if instances[dependency]
-        throw "Instances cannot be injected to #factory (#{dependency})."
-      if constructors[dependency]
-        throw "Constructors cannot be injected to #factory (#{dependency})."
+        throw new Error("Instances (#{dependency}) cannot be injected to #factory.")
 
     singletons[name] =
       dependencies: dependencies
