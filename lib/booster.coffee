@@ -61,7 +61,7 @@ Booster = ->
           process(Array.prototype.slice.call(arguments, 0), dependencies, fn)
 
   factory = (name, dependencies, fn) ->
-    unless name.match(/^[a-z][A-Za-z]*$/)
+    unless name.match(/^\$?[a-z][A-Za-z]*$/)
       throw new Error("Invalid name of factory: #{name}")
 
     for dependency in dependencies

@@ -12,6 +12,10 @@ describe 'Booster', ->
         @Booster.factory 'Math', ->
       ).bind(@).should.throw('Invalid name of factory: Math')
 
+    it 'should accept names with $ in front', (done) ->
+      @Booster.factory '$math', [], done
+      @Booster.start ['$math'], ($math) ->
+
     it 'should evalulate only once', ->
       calls = 0
 
