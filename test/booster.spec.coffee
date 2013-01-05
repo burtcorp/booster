@@ -8,9 +8,9 @@ describe 'Booster', ->
 
   describe 'singleton', ->
     it 'should raise when name is incorrect', ->
-      (->
+      (=>
         @Booster.factory 'Math', ->
-      ).bind(@).should.throw('Invalid name of factory: Math')
+      ).should.throw('Invalid name of factory: Math')
 
     it 'should accept names with $ in front', (done) ->
       @Booster.factory '$math', [], done
@@ -52,9 +52,9 @@ describe 'Booster', ->
 
   describe 'instance', ->
     it 'should raise when name is incorrect', ->
-      (->
+      (=>
         @Booster.service 'Math', ->
-      ).bind(@).should.throw('Invalid name of service: Math')
+      ).should.throw('Invalid name of service: Math')
 
     it 'should automatically define a constructor', ->
       @Booster.service 'math', [], ->
@@ -160,10 +160,10 @@ describe 'Booster', ->
         @Booster.start ['one'], (one) ->
 
       it 'should not be allowed to inject instances', ->
-        (->
+        (=>
           @Booster.service 'one', [], ->
           @Booster.start ['one'], (one) ->
-        ).bind(@).should.throw('Instances (one) cannot be injected to start.')
+        ).should.throw('Instances (one) cannot be injected to start.')
 
       it 'should be allowed to inject constructors', (done) ->
         @Booster.service 'one', [], ->
@@ -172,14 +172,14 @@ describe 'Booster', ->
           One.new()
 
       it 'should raise when singleton dependency does not exist', ->
-        (->
+        (=>
           @Booster.start ['one'], (one) ->
-        ).bind(@).should.throw('Cannot find dependency one')
+        ).should.throw('Cannot find dependency one')
 
       it 'should raise when constructor dependency does not exist', ->
-        (->
+        (=>
           @Booster.start ['One'], (One) ->
-        ).bind(@).should.throw('Cannot find dependency One')
+        ).should.throw('Cannot find dependency One')
 
     describe '#factory', ->
       it 'should be allowed to inject factories', (done) ->
@@ -189,11 +189,11 @@ describe 'Booster', ->
         @Booster.start ['one'], (one) ->
 
       it 'should not be allowed to inject instances', ->
-        (->
+        (=>
           @Booster.service 'two', [], ->
           @Booster.factory 'one', ['two'], (two) ->
           @Booster.start ['one'], (one) ->
-        ).bind(@).should.throw('Instances (two) cannot be injected to #factory.')
+        ).should.throw('Instances (two) cannot be injected to #factory.')
 
       it 'should be allowed to inject constructors', (done) ->
         @Booster.service 'two', [], ->
@@ -203,16 +203,16 @@ describe 'Booster', ->
         @Booster.start ['one'], (one) ->
 
       it 'should raise when singleton/instance dependency does not exist', ->
-        (->
+        (=>
           @Booster.factory 'one', ['two'], (two) ->
           @Booster.start ['one'], (one) ->
-        ).bind(@).should.throw('Cannot find dependency two')
+        ).should.throw('Cannot find dependency two')
 
       it 'should raise when constructor dependency does not exist', ->
-        (->
+        (=>
           @Booster.factory 'one', ['Two'], (Two) ->
           @Booster.start ['one'], (one) ->
-        ).bind(@).should.throw('Cannot find dependency Two')
+        ).should.throw('Cannot find dependency Two')
 
     describe '#service', ->
       it 'should be allowed to inject factories', (done) ->
@@ -238,18 +238,18 @@ describe 'Booster', ->
           One.new()
 
       it 'should raise when singleton/instance dependency does not exist', ->
-        (->
+        (=>
           @Booster.service 'one', ['two'], (two) ->
           @Booster.start ['One'], (One) ->
             One.new()
-        ).bind(@).should.throw('Cannot find dependency two')
+        ).should.throw('Cannot find dependency two')
 
       it 'should raise when constructor dependency does not exist', ->
-        (->
+        (=>
           @Booster.service 'one', ['Two'], (Two) ->
           @Booster.start ['One'], (One) ->
             One.new()
-        ).bind(@).should.throw('Cannot find dependency Two')
+        ).should.throw('Cannot find dependency Two')
 
     describe '#middleware', ->
       it 'should be allowed to inject factories', (done) ->
@@ -260,12 +260,12 @@ describe 'Booster', ->
         @Booster.start [], ->
 
       it 'should not be allowed to inject instances', ->
-        (->
+        (=>
           @Booster.service 'one', [], ->
           @Booster.middleware ['next', 'one'], (next, one) ->
             next()
           @Booster.start [], ->
-        ).bind(@).should.throw('Instances (one) cannot be injected to #middleware.')
+        ).should.throw('Instances (one) cannot be injected to #middleware.')
 
       it 'should be allowed to inject constructors', (done) ->
         @Booster.service 'one', [], ->
@@ -275,13 +275,13 @@ describe 'Booster', ->
         @Booster.start [], ->
   
       it 'should raise when singleton dependency does not exist', ->
-        (->
+        (=>
           @Booster.middleware ['next', 'one'], (next, one) ->
           @Booster.start [], ->
-        ).bind(@).should.throw('Cannot find dependency one')
+        ).should.throw('Cannot find dependency one')
 
       it 'should raise when constructor dependency does not exist', ->
-        (->
+        (=>
           @Booster.middleware ['next', 'One'], (next, One) ->
           @Booster.start [], ->
-        ).bind(@).should.throw('Cannot find dependency One')
+        ).should.throw('Cannot find dependency One')
