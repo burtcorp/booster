@@ -134,6 +134,23 @@ describe 'Booster', ->
 
       @Booster.start ['PageTracker'], (PageTracker) ->
         PageTracker.new(win)
+  
+  describe 'middleware', ->
+    it 'should not start when middleware does not call next', ->
+      @Booster.middleware [], ->
+      @Booster.start [], fail
+
+    it 'should start when middleware calls next', (done) ->
+      @Booster.middleware ['next'], (next) ->
+        next()
+      @Booster.start [], done
+
+    it 'should start when middlewares calls next', (done) ->
+      @Booster.middleware ['next'], (next) ->
+        next()
+      @Booster.middleware ['next'], (next) ->
+        next()
+      @Booster.start [], done
 
   describe 'injection', ->
     describe '#start', ->
@@ -233,3 +250,38 @@ describe 'Booster', ->
           @Booster.start ['One'], (One) ->
             One.new()
         ).bind(@).should.throw('Cannot find dependency Two')
+
+    describe '#middleware', ->
+      it 'should be allowed to inject factories', (done) ->
+        @Booster.factory 'one', [], ->
+          done()
+        @Booster.middleware ['next', 'one'], (next, one) ->
+          next()
+        @Booster.start [], ->
+
+      it 'should not be allowed to inject instances', ->
+        (->
+          @Booster.service 'one', [], ->
+          @Booster.middleware ['next', 'one'], (next, one) ->
+            next()
+          @Booster.start [], ->
+        ).bind(@).should.throw('Instances (one) cannot be injected to #middleware.')
+
+      it 'should be allowed to inject constructors', (done) ->
+        @Booster.service 'one', [], ->
+          done()
+        @Booster.middleware ['next', 'One'], (next, One) ->
+          One.new()
+        @Booster.start [], ->
+  
+      it 'should raise when singleton dependency does not exist', ->
+        (->
+          @Booster.middleware ['next', 'one'], (next, one) ->
+          @Booster.start [], ->
+        ).bind(@).should.throw('Cannot find dependency one')
+
+      it 'should raise when constructor dependency does not exist', ->
+        (->
+          @Booster.middleware ['next', 'One'], (next, One) ->
+          @Booster.start [], ->
+        ).bind(@).should.throw('Cannot find dependency One')
