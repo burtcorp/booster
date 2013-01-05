@@ -23,7 +23,7 @@ forever and it has no constructor.
 
 To define a singleton, use the `#factory` function.
 
-    Scope.factory 'config', ->
+    Scope.factory 'config', [], ->
       min: 0
       max: 100
       log: false
@@ -43,20 +43,22 @@ definition, inherits the objects this object was created
 with. Inheritence can be avoided by instead injecting the
 constructor. Example:
 
-    Scope.service 'node', (node) ->
+    Scope.service 'domNode', ['node'], (node) ->
       width: -> node.clientWidth
       height: -> node.clientHeight
+      getAttribute: node.getAttribute
      
-    Scope.service 'image', ['node'], (node) ->
-      width: -> node.width()
-      height: -> node.height()
+    Scope.service 'image', ['node', 'domNode'], (node, domNode) ->
+      width: domNode.width
+      height: domNode.height
+      alt: -> domNode.getAttribute('alt')
      
     Scope.service 'window', ['$window', 'Image'], ($window, Image) ->
       images = []
-   
+     
       for node in $window.document.getElementsByTagName('IMG')
         images.push Image.new(node)
-   
+      
       images: images
      
     Scope.start ['Window'], (Window) ->
@@ -65,6 +67,32 @@ constructor. Example:
       for image in $window.images
         console.log image.height()
         console.log image.width()
+        console.log image.alt()
+        
+### Middleware
+
+A middleware is a filter between start and the definitions. Here's an
+example where the application only starts if the user is authenticated
+and not using IE.
+
+    Scope.middleware ['next', 'auth'], (next, auth) ->
+      next() if auth.isSignedIn()
+      
+    Scope.middleware ['next', 'browser'], (next, browser) ->
+      next() unless browser.ie() # ie, you suck
+      
+    Scope.factory '$window', [], ->
+      user: window.user
+      navigator: window.navigator
+     
+    Scope.factory 'auth', ['$window'], ($window) ->
+      isSignedIn: -> $window.user?
+     
+    Scope.factory 'browser', ['$window'], ($window) ->
+      ie: -> /MSIE/.test($window.navigator.userAgent)
+      
+    Scope.start [], ->
+      console.log 'Started...'
 
 ## Example
 
