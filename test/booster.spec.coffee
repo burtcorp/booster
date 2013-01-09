@@ -152,6 +152,16 @@ describe 'Booster', ->
         next()
       @Booster.start [], done
 
+    it 'should be possible to wrap #next', (done) ->
+      @Booster.middleware ['next'], (next) ->
+        try
+          next()
+        catch error
+          done()
+      @Booster.factory 'one', [], ->
+        throw new Error 'error'
+      @Booster.start ['one'], (one) ->
+        
   describe 'injection', ->
     describe '#start', ->
       it 'should be allowed to inject factories', (done) ->

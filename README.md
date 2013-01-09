@@ -72,33 +72,22 @@ constructor. Example:
 ### Middleware
 
 A middleware is a filter between start and the definitions. Here's an
-example where the application only starts if the user is authenticated
-and not using IE.
+example where the application throws errors only if hostname is
+localhost. Otherwise all errors are pushed to an API.
 
-    Scope.middleware ['next', 'auth'], (next, auth) ->
-      next() if auth.isSignedIn()
-      
-    Scope.middleware ['next', 'browser'], (next, browser) ->
-      next() unless browser.ie() # ie, you suck
-      
-    Scope.factory '$window', [], ->
-      user: window.user
-      navigator: window.navigator
-     
-    Scope.factory 'auth', ['$window'], ($window) ->
-      isSignedIn: -> $window.user?
-     
-    Scope.factory 'browser', ['$window'], ($window) ->
-      ie: -> /MSIE/.test($window.navigator.userAgent)
-      
+    Scope.middleware ['next', 'api'], (next, api) ->
+      if window.location.hostname is 'localhost'
+        next()
+      else
+        try
+          next()
+        catch error
+          api.push error.toString()
+        
     Scope.start [], ->
-      console.log 'Started...'
+      # Will push to api in production and throw error in development.
+      throw new Error('ALARM')
 
 ## Example
 
 See <https://github.com/burtcorp/booster/blob/master/test/booster.spec.coffee>
-      
-      
-      
-      
-      
