@@ -19,14 +19,14 @@ Booster = ->
       args = []
 
       for dependency in dependencies
-        if singletons[dependency]
+        if singleton = singletons[dependency]
           unless cache.hasOwnProperty(dependency)
-            cache[dependency] = process([], singletons[dependency].dependencies, singletons[dependency].fn, singletons[dependency].name)
+            cache[dependency] = process([], singleton.dependencies, singleton.fn, singleton.name)
           args.push(cache[dependency])
-        else if constructors[dependency]
-          args.push(constructors[dependency].fn)
-        else if instances[dependency]
-          args.push process([], instances[dependency].dependencies, instances[dependency].fn, instances[dependency].name)
+        else if constructor = constructors[dependency]
+          args.push(constructor.fn)
+        else if instance = instances[dependency]
+          args.push process([], instance.dependencies, instance.fn, instance.name)
         else
           throw new Error("Missing dependency `#{dependency}` in #start")
 
@@ -45,12 +45,12 @@ Booster = ->
       if constructors[arg] and arg.slice(0, 1).match(/^[A-Z]$/)
         args.push constructors[arg].fn
       else
-        if singletons[arg]
+        if singleton = singletons[arg]
           unless cache.hasOwnProperty(arg)
-            cache[arg] = process([], singletons[arg].dependencies, singletons[arg].fn, singletons[arg].name)
+            cache[arg] = process([], singleton.dependencies, singleton.fn, singleton.name)
           args.push cache[arg]
-        else if instances[arg]
-          args.push process([], instances[arg].dependencies, instances[arg].fn, instances[arg].name)
+        else if instance = instances[arg]
+          args.push process([], instance.dependencies, instance.fn, instance.name)
         else
           throw new Error("Missing dependency `#{arg}` in ##{name}")
 
