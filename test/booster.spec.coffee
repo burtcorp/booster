@@ -76,64 +76,11 @@ describe 'Booster', ->
         math = Math.new()
         math.addition(1, 2).should.equal(3)
 
-    it 'should support scope inheritence', ->
-      @Booster.service 'addition', ['a', 'b'], (a, b) ->
-        -> a + b
-
-      @Booster.service 'subtraction', ['a', 'b'], (a, b) ->
-        -> a - b
-
-      @Booster.service 'math', ['a', 'b', 'addition', 'subtraction'], (a, b, addition, subtraction) ->
-        addition: addition
-        subtraction: subtraction
-
-      @Booster.start ['Math'], (Math) ->
-        math = Math.new(1, 2)
-        math.addition().should.equal(3)
-        math.subtraction().should.equal(-1)
-
-    it 'should support scope inheritence with dependency injection', ->
-      @Booster.service 'science', ['a', 'b'], (a, b) ->
-        addition: -> a + b
-        subtraction: -> a - b
-
-      @Booster.service 'addition', ['a', 'b', 'science'], (a, b, science) ->
-        science.addition
-
-      @Booster.service 'subtraction', ['a', 'b', 'science'], (a, b, science) ->
-        science.subtraction
-
-      @Booster.service 'math', ['a', 'b', 'addition', 'subtraction'], (a, b, addition, subtraction) ->
-        addition: addition
-        subtraction: subtraction
-
-      @Booster.start ['Math'], (Math) ->
-        math = Math.new(1, 2)
-        math.addition().should.equal(3)
-        math.subtraction().should.equal(-1)
-
     it 'should accept names with $ in front', (done) ->
-      win =
-        rand: Math.random()
+      @Booster.factory '$window', [], ->
+        done()
 
-      count = 0
-
-      test = ($window) ->
-        win.should.eql($window)
-        if ++count is 3
-          done()
-
-      @Booster.service 'pageObserver', ['$window'], ($window) ->
-        test($window)
-
-      @Booster.service 'page', ['$window'], ($window) ->
-        test($window)
-
-      @Booster.service 'pageTracker', ['$window', 'pageObserver', 'page'], ($window, pageObserver, page) ->
-        test($window)
-
-      @Booster.start ['PageTracker'], (PageTracker) ->
-        PageTracker.new(win)
+      @Booster.start ['$window'], ($window) ->
   
   describe 'middleware', ->
     it 'should not start when middleware does not call next', ->
@@ -169,11 +116,10 @@ describe 'Booster', ->
           done()
         @Booster.start ['one'], (one) ->
 
-      it 'should not be allowed to inject instances', ->
-        (=>
-          @Booster.service 'one', [], ->
-          @Booster.start ['one'], (one) ->
-        ).should.throw('Instances (one) cannot be injected to start.')
+      it 'should be allowed to inject instances', (done) ->
+        @Booster.service 'one', [], ->
+          done()
+        @Booster.start ['one'], (one) ->
 
       it 'should be allowed to inject constructors', (done) ->
         @Booster.service 'one', [], ->
@@ -184,12 +130,12 @@ describe 'Booster', ->
       it 'should raise when singleton dependency does not exist', ->
         (=>
           @Booster.start ['one'], (one) ->
-        ).should.throw('Cannot find dependency one')
+        ).should.throw('Missing dependency `one` in #start')
 
       it 'should raise when constructor dependency does not exist', ->
         (=>
           @Booster.start ['One'], (One) ->
-        ).should.throw('Cannot find dependency One')
+        ).should.throw('Missing dependency `One` in #start')
 
     describe '#factory', ->
       it 'should be allowed to inject factories', (done) ->
@@ -216,13 +162,13 @@ describe 'Booster', ->
         (=>
           @Booster.factory 'one', ['two'], (two) ->
           @Booster.start ['one'], (one) ->
-        ).should.throw('Cannot find dependency two')
+        ).should.throw('Missing dependency `two` in #one')
 
       it 'should raise when constructor dependency does not exist', ->
         (=>
           @Booster.factory 'one', ['Two'], (Two) ->
           @Booster.start ['one'], (one) ->
-        ).should.throw('Cannot find dependency Two')
+        ).should.throw('Missing dependency `Two` in #one')
 
     describe '#service', ->
       it 'should be allowed to inject factories', (done) ->
@@ -252,14 +198,14 @@ describe 'Booster', ->
           @Booster.service 'one', ['two'], (two) ->
           @Booster.start ['One'], (One) ->
             One.new()
-        ).should.throw('Cannot find dependency two')
+        ).should.throw('Missing dependency `two` in #one')
 
       it 'should raise when constructor dependency does not exist', ->
         (=>
           @Booster.service 'one', ['Two'], (Two) ->
           @Booster.start ['One'], (One) ->
             One.new()
-        ).should.throw('Cannot find dependency Two')
+        ).should.throw('Missing dependency `Two` in #one')
 
     describe '#middleware', ->
       it 'should be allowed to inject factories', (done) ->
@@ -288,10 +234,10 @@ describe 'Booster', ->
         (=>
           @Booster.middleware ['next', 'one'], (next, one) ->
           @Booster.start [], ->
-        ).should.throw('Cannot find dependency one')
+        ).should.throw('Missing dependency `one` in #middleware')
 
       it 'should raise when constructor dependency does not exist', ->
         (=>
           @Booster.middleware ['next', 'One'], (next, One) ->
           @Booster.start [], ->
-        ).should.throw('Cannot find dependency One')
+        ).should.throw('Missing dependency `One` in #middleware')

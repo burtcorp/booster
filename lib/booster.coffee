@@ -21,15 +21,14 @@ Booster = ->
       for dependency in dependencies
         if singletons[dependency]
           unless cache.hasOwnProperty(dependency)
-            cache[dependency] = process([], singletons[dependency].dependencies, singletons[dependency].fn)
+            cache[dependency] = process([], singletons[dependency].dependencies, singletons[dependency].fn, singletons[dependency].name)
           args.push(cache[dependency])
         else if constructors[dependency]
           args.push(constructors[dependency].fn)
+        else if instances[dependency]
+          args.push process([], instances[dependency].dependencies, instances[dependency].fn, instances[dependency].name)
         else
-          if instances[dependency]
-            throw new Error("Instances (#{dependency}) cannot be injected to start.")
-          else
-            throw new Error("Cannot find dependency #{dependency}")
+          throw new Error("Missing dependency `#{dependency}` in #start")
 
       fn.apply(null, args)
 
@@ -38,9 +37,9 @@ Booster = ->
     else
       ready()
 
-  process = (argv, dependencies, fn) ->
-    rest = Array.prototype.slice.call(dependencies, argv.length)
+  process = (argv, dependencies, fn, name = null) ->
     args = Array.prototype.slice.call(argv, 0)
+    rest = Array.prototype.slice.call(dependencies, argv.length)
 
     for arg in rest
       if constructors[arg] and arg.slice(0, 1).match(/^[A-Z]$/)
@@ -48,12 +47,12 @@ Booster = ->
       else
         if singletons[arg]
           unless cache.hasOwnProperty(arg)
-            cache[arg] = process([], singletons[arg].dependencies, singletons[arg].fn)
+            cache[arg] = process([], singletons[arg].dependencies, singletons[arg].fn, singletons[arg].name)
           args.push cache[arg]
         else if instances[arg]
-          args.push process(Array.prototype.slice.call(argv, 0), instances[arg].dependencies, instances[arg].fn)
+          args.push process([], instances[arg].dependencies, instances[arg].fn, instances[arg].name)
         else
-          throw new Error("Cannot find dependency #{arg}")
+          throw new Error("Missing dependency `#{arg}` in ##{name}")
 
     fn.apply(null, args)
 
@@ -65,16 +64,18 @@ Booster = ->
       constructorName = name.slice(1, 2).toUpperCase() + name.slice(2)
     else
       constructorName = name.slice(0, 1).toUpperCase() + name.slice(1)
-
+  
     instances[name] =
+      name: name
       dependencies: dependencies
       fn: fn
 
     constructors[constructorName] =
+      name: constructorName
       dependencies: dependencies
       fn:
         new: ->
-          process(Array.prototype.slice.call(arguments, 0), dependencies, fn)
+          process(Array.prototype.slice.call(arguments, 0), dependencies, fn, name)
 
   factory = (name, dependencies, fn) ->
     unless name.match(/^\$?[a-z][A-Za-z]*$/)
@@ -85,6 +86,7 @@ Booster = ->
         throw new Error("Instances (#{dependency}) cannot be injected to #factory.")
 
     singletons[name] =
+      name: name
       dependencies: dependencies
       fn: fn
 
@@ -99,7 +101,7 @@ Booster = ->
         throw new Error("Instances (#{dependency}) cannot be injected to #middleware.")
 
     middlewares.push ->
-      process [prev], dependencies, fn
+      process [prev], dependencies, fn, 'middleware'
 
   start: start
   service: service
