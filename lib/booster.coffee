@@ -81,10 +81,6 @@ Booster = ->
     unless name.match(/^\$?[a-z][A-Za-z]*$/)
       throw new Error("Invalid name of factory: #{name}")
 
-    for dependency in dependencies
-      if instances[dependency]
-        throw new Error("Instances (#{dependency}) cannot be injected to #factory.")
-
     singletons[name] =
       name: name
       dependencies: dependencies

@@ -144,12 +144,10 @@ describe 'Booster', ->
         @Booster.factory 'one', ['two'], (two) ->
         @Booster.start ['one'], (one) ->
 
-      it 'should not be allowed to inject instances', ->
-        (=>
-          @Booster.service 'two', [], ->
-          @Booster.factory 'one', ['two'], (two) ->
-          @Booster.start ['one'], (one) ->
-        ).should.throw('Instances (two) cannot be injected to #factory.')
+      it 'should be allowed to inject instances', ->
+        @Booster.service 'two', [], ->
+        @Booster.factory 'one', ['two'], (two) ->
+        @Booster.start ['one'], (one) ->
 
       it 'should be allowed to inject constructors', (done) ->
         @Booster.service 'two', [], ->
